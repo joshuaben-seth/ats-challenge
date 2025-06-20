@@ -210,7 +210,7 @@ export default function ChatPanel({ setFilteredCandidates, onTimelineUpdate }: C
                   </div>
                   <h3 className="text-lg font-medium text-foreground mb-2">Welcome to ATS-Lite</h3>
                   <p className="text-sm text-muted-foreground max-w-xs mx-auto">
-                    Ask me anything about candidates, filtering, or analysis. I'm here to help!
+                    Ask me anything about candidates, filtering, or analysis. I&apos;m here to help!
                   </p>
                 </div>
               )}
