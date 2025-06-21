@@ -95,7 +95,7 @@ export interface MCPPlans {
 export interface TimelineEntryPhase {
   id: string;
   timestamp: Date;
-  phase: 'think' | 'act1' | 'act2' | 'speak';
+  phase: 'think' | 'act1' | 'act2' | 'speak' | 'completion';
   title: string;
   description: string;
   data?: {
@@ -103,6 +103,7 @@ export interface TimelineEntryPhase {
     matchCount?: number;
     rankingPlan?: Record<string, unknown>;
     rankedIds?: string[];
+    duration?: number;
     [key: string]: unknown;
   };
 }

@@ -16,33 +16,34 @@ export async function thinkPhase(userMessage: string): Promise<MCPPlans> {
         content: `You are a recruitment assistant that analyzes candidate data. 
         Respond ONLY with a valid JSON object, no commentary, no markdown, no code block, no explanation. Do not say anything except the JSON object.
         Format:
-        { "filter": { "include": { /* specific filter criteria */ } }, "rank": { "primary": { "field": "field_name", "direction": "asc"|"desc" } } }
+        { "filter": { "include": { /* specific filter criteria */ }, "exclude": { /* specific filter criteria */ } }, "rank": { "primary": { "field": "field_name", "direction": "asc"|"desc" } } }
         
         Available candidate fields: id, full_name, title, location, timezone, years_experience, 
         skills, languages, education_level, degree_major, availability_weeks, willing_to_relocate, 
         work_preference, notice_period_weeks, desired_salary_usd, open_to_contract, 
         remote_experience_years, visa_status, citizenships, summary, tags, last_active, linkedin_url
         
-        FilterPlan must include specific criteria in the "include" object:
-        - title: array of job titles to match (e.g., ["Software Engineer", "Developer"])
-        - location: array of locations to match (e.g., ["San Francisco", "New York"])
-        - skills: array of skills to match (e.g., ["JavaScript", "React", "Python"])
-        - languages: array of languages to match (e.g., ["English", "Spanish"])
-        - education_level: array of education levels (e.g., ["Bachelor's", "Master's"])
-        - work_preference: array of work preferences (e.g., ["Remote", "Hybrid", "On-site"])
-        - visa_status: array of visa statuses (e.g., ["US Citizen", "H1B", "Green Card"])
-        - tags: array of tags to match (e.g., ["Senior", "Full-stack", "Frontend"])
-        - years_experience_min: minimum years of experience (number)
-        - years_experience_max: maximum years of experience (number)
-        - desired_salary_min: minimum desired salary (number)
-        - desired_salary_max: maximum desired salary (number)
-        - availability_weeks_max: maximum availability in weeks (number)
-        - notice_period_weeks_max: maximum notice period in weeks (number)
-        - willing_to_relocate: boolean (true/false)
-        - open_to_contract: boolean (true/false)
+        FilterPlan must include specific criteria in the "include" and/or "exclude" objects as appropriate:
+        - For "include", specify what should be matched (e.g., must have these skills, must be in these locations).
+        - For "exclude", specify what should be excluded (e.g., exclude certain titles, locations, skills, etc.).
+        - Both "include" and "exclude" support the following fields:
+          - title: array of job titles (e.g., ["Software Engineer", "Developer"])
+          - location: array of locations (e.g., ["San Francisco", "New York"])
+          - skills: array of skills (e.g., ["JavaScript", "React", "Python"])
+          - languages: array of languages (e.g., ["English", "Spanish"])
+          - education_level: array of education levels (e.g., ["Bachelor's", "Master's"])
+          - work_preference: array of work preferences (e.g., ["Remote", "Hybrid", "On-site"])
+          - visa_status: array of visa statuses (e.g., ["US Citizen", "H1B", "Green Card"])
+          - tags: array of tags (e.g., ["Senior", "Full-stack", "Frontend"])
+          - years_experience_min / years_experience_max: minimum/maximum years of experience (number)
+          - desired_salary_min / desired_salary_max: minimum/maximum desired salary (number)
+          - availability_weeks_max: maximum availability in weeks (number)
+          - notice_period_weeks_max: maximum notice period in weeks (number)
+          - willing_to_relocate: boolean (true/false)
+          - open_to_contract: boolean (true/false)
         
-        IMPORTANT: Always include specific filter criteria based on the user's request. Do not return empty filter objects.
-        If the user asks for "all candidates" or doesn't specify criteria, use broad but meaningful filters like:
+        IMPORTANT: Always include specific filter criteria in "include" and/or "exclude" based on the user's request. Do not return empty filter objects.
+        If the user asks for "all candidates" or doesn't specify criteria, use broad but meaningful filters in "include" like:
         - years_experience_min: 0
         - desired_salary_min: 0
         

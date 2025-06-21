@@ -7,6 +7,7 @@ import ChatInput from './ChatInput';
 import type { Candidate } from '@/app/lib/candidates';
 import type { TimelineEntry } from '@/app/lib/types';
 import { processChatStream } from '@/app/lib/chat/stream';
+import { Minimize2, Maximize2, Move } from 'lucide-react';
 
 type Message = {
   id: string;
@@ -25,6 +26,18 @@ type ChatPanelProps = {
   onTimelineUpdate: React.Dispatch<React.SetStateAction<TimelineEntry[]>>;
 };
 
+function DragHandle() {
+  const { attributes, listeners, setNodeRef } = useDraggable({
+    id: 'floating-chat-panel',
+  });
+
+  return (
+    <div ref={setNodeRef} {...attributes} {...listeners} className="cursor-move text-gray-400 hover:text-white transition-colors" title="Drag to move">
+      <Move size={16} />
+    </div>
+  );
+}
+
 function FloatingDraggablePanel({
   children,
   position,
@@ -38,28 +51,12 @@ function FloatingDraggablePanel({
     position: 'fixed',
     zIndex: 50,
     left: position.x,
-    top: position.y,
+    bottom: position.y,
     transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
     transition: transform ? 'none' : undefined,
   };
   return (
     <div style={style}>
-      {children}
-    </div>
-  );
-}
-
-function DraggableHeader({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const { attributes, listeners, setNodeRef } = useDraggable({
-    id: 'floating-chat-panel',
-  });
-
-  return (
-    <div ref={setNodeRef} {...attributes} {...listeners}>
       {children}
     </div>
   );
@@ -72,6 +69,7 @@ export default function ChatPanel({ setFilteredCandidates, onTimelineUpdate }: C
   const [position, setPosition] = useState<{ x: number; y: number } | null>(null);
   const [dragTransform, setDragTransform] = useState<{ x: number; y: number } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [isMinimized, setIsMinimized] = useState(false);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -79,13 +77,11 @@ export default function ChatPanel({ setFilteredCandidates, onTimelineUpdate }: C
 
   useEffect(() => {
     if (position === null && typeof window !== 'undefined') {
-      const panelWidth = 700;
-      const panelHeight = 600;
+      const panelWidth = 600;
       const margin = 20;
       
-      // Calculate safe position that keeps the panel fully visible
       const safeX = Math.max(margin, Math.min(window.innerWidth - panelWidth - margin, window.innerWidth - 400));
-      const safeY = Math.max(margin, Math.min(window.innerHeight - panelHeight - margin, window.innerHeight - 300));
+      const safeY = 50; // 50px from bottom
       
       setPosition({
         x: safeX,
@@ -138,6 +134,17 @@ export default function ChatPanel({ setFilteredCandidates, onTimelineUpdate }: C
             role: 'system',
             content: `✅ Completed in ${duration.toFixed(2)} seconds`,
           }]);
+          
+          // Add completion entry to timeline
+          onTimelineUpdate(prev => [...prev, {
+            type: 'phase',
+            id: `completion-${Date.now()}`,
+            phase: 'completion',
+            title: 'Query Completed',
+            description: `Completed in ${duration.toFixed(2)} seconds`,
+            timestamp: new Date(),
+            data: { duration }
+          }]);
         },
         onError: () => {
           setIsLoading(false);
@@ -169,73 +176,66 @@ export default function ChatPanel({ setFilteredCandidates, onTimelineUpdate }: C
         if (event.active.id === 'floating-chat-panel' && event.delta) {
           setPosition(pos => ({
             x: pos!.x + event.delta.x,
-            y: pos!.y + event.delta.y
+            y: pos!.y - event.delta.y
           }));
           setDragTransform(null);
         }
       }}
     >
       <FloatingDraggablePanel position={position} transform={dragTransform || undefined}>
-        <div
-          className={`bg-card/95 backdrop-blur-sm text-foreground rounded-2xl shadow-2xl border border-border/50 transition-all duration-300 ease-in-out w-[700px] h-[600px] overflow-hidden glass-effect`}
-          style={{
-            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.05)'
-          }}
-        >
-          {/* Header */}
-          <DraggableHeader>
-            <div className="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-secondary/80 to-secondary/60 backdrop-blur-sm border-b border-border/30 cursor-move">
-              <div className="flex items-center gap-3 text-foreground">
-                <div className="w-8 h-8 bg-gradient-to-br from-primary to-primary/80 rounded-lg flex items-center justify-center">
-                  <span className="text-primary-foreground text-sm font-bold">A</span>
-                </div>
-                <div>
-                  <span className="text-sm font-semibold">ATS-Lite</span>
-                  <div className="text-xs text-muted-foreground">AI Assistant</div>
+        <div className="w-[600px] flex flex-col-reverse">
+          <div className="shrink-0 pt-4">
+            <ChatInput
+              input={input}
+              isLoading={isLoading}
+              onInputChange={setInput}
+              onSubmit={handleSubmit}
+            />
+          </div>
+          
+          <div className="relative min-h-14">
+            <div className="absolute top-3 right-3 z-20 flex items-center gap-2" data-tour="chat-controls">
+              <div className="bg-background/50 backdrop-blur-sm p-1 rounded-lg">
+                <button 
+                  onClick={() => setIsMinimized(!isMinimized)} 
+                  className="text-gray-400 hover:text-white transition-colors w-5 h-5 flex items-center justify-center"
+                  title={isMinimized ? 'Show messages' : 'Hide messages'}
+                >
+                  {isMinimized ? <Maximize2 size={16} /> : <Minimize2 size={16} />}
+                </button>
+              </div>
+              <div className="bg-background/50 backdrop-blur-sm p-1 rounded-lg">
+                <div className="w-5 h-5 flex items-center justify-center">
+                  <DragHandle />
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span className="text-xs text-muted-foreground">Online</span>
+            </div>
+
+            <div
+              className={`overflow-y-auto transition-all duration-300 ease-in-out ${isMinimized ? 'max-h-0 opacity-0' : 'max-h-[60vh] opacity-100'}`}
+              style={{
+                WebkitMaskImage: 'linear-gradient(to bottom, transparent 5%, black 20%)',
+                maskImage: 'linear-gradient(to bottom, transparent 5%, black 20%)',
+              }}
+            >
+              <div className={`px-4 ${messages.length === 0 ? 'pt-4' : 'pt-12'} pb-4 space-y-4 ${messages.length === 0 ? 'invisible' : ''}`}>
+                {messages.map((message) => (
+                  <ChatMessage key={message.id} message={message} />
+                ))}
+                {isLoading && (
+                  <div className="flex justify-start py-2">
+                    <div className="text-xs text-muted-foreground px-3 py-2 rounded-full bg-secondary/30 flex items-center gap-2">
+                      <div className="flex items-center gap-1">
+                        <div className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce"></div>
+                        <div className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                        <div className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                      </div>
+                      <span>Working...</span>
+                    </div>
+                  </div>
+                )}
+                <div ref={messagesEndRef} />
               </div>
-            </div>
-          </DraggableHeader>
-          {/* Content */}
-          <div className="flex flex-col h-[calc(100%-76px)]">
-            <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-gradient-to-b from-background to-background/95 chat-container">
-              {messages.length === 0 && (
-                <div className="text-center py-8">
-                  <div className="w-16 h-16 bg-secondary/50 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <span className="text-2xl">💬</span>
-                  </div>
-                  <h3 className="text-lg font-medium text-foreground mb-2">Welcome to ATS-Lite</h3>
-                  <p className="text-sm text-muted-foreground max-w-xs mx-auto">
-                    Ask me anything about candidates, filtering, or analysis. I&apos;m here to help!
-                  </p>
-                </div>
-              )}
-              {messages.map((message) => (
-                <ChatMessage key={message.id} message={message} />
-              ))}
-              {isLoading && !messages.some(m => m.role === 'assistant') && (
-                <div className="text-center py-4">
-                  <div className="inline-flex items-center gap-2 text-sm text-muted-foreground">
-                    <div className="w-2 h-2 bg-primary rounded-full animate-bounce"></div>
-                    <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                    <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                    <span className="ml-2">Working...</span>
-                  </div>
-                </div>
-              )}
-              <div ref={messagesEndRef} />
-            </div>
-            <div className="shrink-0">
-              <ChatInput
-                input={input}
-                isLoading={isLoading}
-                onInputChange={setInput}
-                onSubmit={handleSubmit}
-              />
             </div>
           </div>
         </div>

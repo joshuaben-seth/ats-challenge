@@ -19,24 +19,31 @@ export async function speakPhase(writer: StreamWriter, userMessage: string, rank
     messages: [
       {
         role: 'system',
-        content: `You are a helpful recruitment assistant. Provide a concise, friendly summary of the candidate search results. 
-        Include key insights about the candidates found, their experience levels, salary expectations, and any notable patterns.
-        Keep it conversational and actionable for a recruiter.`
+        content: `You are a recruitment assistant. Respond with a very brief, friendly summary of the candidate results.
+Format your response as markdown.
+Do NOT use a table. 
+After the summary, list the top 5 candidates as a simple numbered list, each on its own line, with their name, title, years of experience, and desired salary.
+Example format:
+###Found [count] candidates.
+Avg exp: [avg_experience] yrs | Avg salary: $[avg_salary] | Top skills: [top_skills]
+Top 5 candidates:
+1. Name (Title) - [Exp] yrs experience, $[Salary]/yr
+2. ...
+If there are fewer than 5 candidates, list as many as are available.
+Always format your response as markdown.`
       },
       {
         role: 'user',
-        content: `Original question: "${userMessage}"
-        
-        Found ${stats.count} candidates. Top 5 candidates:
-        ${rankedCandidates.slice(0, 5).map((c, i) => `${i + 1}. ${c.full_name} - ${c.title} (${c.years_experience} years exp, $${c.desired_salary_usd.toLocaleString()})`).join('\n')}
-        
-        Summary stats:
-        - Average experience: ${stats.avg_experience} years
-        - Average salary: $${stats.avg_salary.toLocaleString()}
-        - Top skills: ${stats.top_skills.slice(0, 5).join(', ')}
-        - Locations: ${stats.locations.slice(0, 3).join(', ')}
-        
-        Provide a helpful summary for the recruiter.`
+        content: [
+          `Found ${stats.count} candidates.`,
+          `Avg exp: ${stats.avg_experience} yrs | Avg salary: $${stats.avg_salary.toLocaleString()} | Top skills: ${stats.top_skills.slice(0, 3).join(', ')}`,
+          ``,
+          `Top 5 candidates:`,
+          ``,
+          rankedCandidates.slice(0, 5).map((c, i) =>
+            `${i + 1}. ${c.full_name} (${c.title}) - ${c.years_experience} yrs, $${c.desired_salary_usd.toLocaleString()}`
+          ).join('\n')
+        ].join('\n')
       }
     ],
     temperature: 0.7,

@@ -12,6 +12,8 @@ import {
   FileJson,
   CheckCircle2,
   Users,
+  ChevronLeft,
+  CheckCircle
 } from 'lucide-react';
 import type { TimelineEntry } from '@/app/lib/types';
 import JsonViewer from './JsonViewer';
@@ -28,6 +30,7 @@ const phaseIcons: Record<string, React.ElementType> = {
   act1: Filter,
   act2: Target,
   speak: MessageSquareText,
+  completion: CheckCircle,
 };
 
 const phaseColors: Record<string, string> = {
@@ -36,6 +39,7 @@ const phaseColors: Record<string, string> = {
   act1: 'bg-green-500',
   act2: 'bg-purple-500',
   speak: 'bg-orange-500',
+  completion: 'bg-emerald-500',
 };
 
 const formatTimestamp = (date: Date) => {
@@ -69,10 +73,9 @@ export default function TimelineSidebar({ timeline, isVisible, onToggle }: Timel
           left: isVisible ? 'auto' : '24.5rem',
         }}
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+        data-tour={isVisible ? "timeline-minimize" : "timeline-toggle"}
       >
-        <motion.div animate={{ rotate: isVisible ? 180 : 0 }}>
-          <History className="w-5 h-5 text-foreground" />
-        </motion.div>
+        {isVisible ? <ChevronLeft className="w-4 h-4 text-foreground" /> : <History className="w-4 h-4 text-foreground" />}
       </motion.button>
       
       <div className="p-4 border-b border-border">
@@ -82,7 +85,7 @@ export default function TimelineSidebar({ timeline, isVisible, onToggle }: Timel
       <div ref={scrollContainerRef} className="flex-grow overflow-y-auto p-6">
         {timeline.length === 0 ? (
           <div className="text-center text-muted-foreground mt-8">
-            <History className="w-12 h-12 mx-auto mb-4 opacity-30" />
+            <History className="w-8 h-8 mx-auto mb-4 opacity-30" />
             <p className="font-medium">No activity yet</p>
             <p className="text-sm">Run a query in the chat to see the execution timeline here.</p>
           </div>
@@ -110,8 +113,8 @@ export default function TimelineSidebar({ timeline, isVisible, onToggle }: Timel
                       <div className="absolute left-11 top-6 h-full w-0.5 bg-border -z-10" />
                     )}
 
-                    <div className={`absolute left-0 top-1 w-8 h-8 rounded-full ${color} flex items-center justify-center ring-8 ring-background ${isQuery ? '' : 'left-8 w-6 h-6'}`}>
-                      <Icon className={`text-white ${isQuery ? 'w-5 h-5' : 'w-4 h-4'}`} />
+                    <div className={`absolute left-0 top-1 w-6 h-6 rounded-full ${color} flex items-center justify-center ring-6 ring-background ${isQuery ? '' : 'left-8 w-5 h-5'}`}>
+                      <Icon className={`text-white ${isQuery ? 'w-3 h-3' : 'w-3 h-3'}`} />
                     </div>
                     
                     <div className="flex flex-col">
@@ -124,21 +127,30 @@ export default function TimelineSidebar({ timeline, isVisible, onToggle }: Timel
                       )}
                       <p className="text-sm text-muted-foreground">{formatTimestamp(entry.timestamp)}</p>
 
-                      {!isQuery && !isSimplePhase && (
+                      {entry.type === 'phase' && entry.phase === 'completion' && (
+                        <div className="mt-2">
+                          <div className="inline-flex items-center gap-2 text-xs text-emerald-400 font-medium bg-emerald-500/20 px-2.5 py-1 rounded-full">
+                            <CheckCircle className="w-3 h-3" />
+                            {entry.data?.duration && <span>Completed in {entry.data.duration.toFixed(2)}s</span>}
+                          </div>
+                        </div>
+                      )}
+
+                      {!isQuery && !isSimplePhase && entry.phase !== 'completion' && (
                         <div className="mt-2 p-3 bg-secondary/50 rounded-lg border border-border/50 text-sm">
                           <p className="text-muted-foreground italic mb-2">{entry.description}</p>
                           
                           <div className="space-y-2">
                             {entry.phase === 'act1' && entry.data?.matchCount !== undefined && (
                               <div className="flex items-center gap-2 text-xs text-green-400 font-medium">
-                                <Users className="w-4 h-4" />
+                                <Users className="w-3 h-3" />
                                 <span>{entry.data.matchCount} candidates found</span>
                               </div>
                             )}
 
                             {entry.phase === 'act2' && entry.data?.rankedIds && (
                               <div className="flex items-center gap-2 text-xs text-purple-400 font-medium">
-                                <CheckCircle2 className="w-4 h-4" />
+                                <CheckCircle2 className="w-3 h-3" />
                                 <span>{entry.data.rankedIds.length} candidates ranked</span>
                               </div>
                             )}

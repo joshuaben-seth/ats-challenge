@@ -16,6 +16,7 @@ export default function ChatInput({ input, isLoading, onInputChange, onSubmit }:
       onSubmit={onSubmit}
       className="w-full px-4 pb-4 pt-2 bg-transparent"
       autoComplete="off"
+      data-tour="chat-input"
     >
       <div
         className="w-full flex items-center bg-gradient-to-r from-secondary/80 to-secondary/60 backdrop-blur-sm rounded-full shadow-lg pl-6 pr-2 py-2 border border-border/50 transition-all duration-200 hover:shadow-xl chat-input"
