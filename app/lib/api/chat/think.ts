@@ -23,18 +23,34 @@ export async function thinkPhase(userMessage: string): Promise<MCPPlans> {
         work_preference, notice_period_weeks, desired_salary_usd, open_to_contract, 
         remote_experience_years, visa_status, citizenships, summary, tags, last_active, linkedin_url
         
+        IMPORTANT: Use exact values from the database. Common values include:
+        
+        Titles: "Backend Engineer", "Frontend Engineer", "DevOps Engineer", "QA Engineer", "Data Scientist", "Machine Learning Engineer", "Cloud Architect", "Product Engineer", "Full‑Stack Developer", "Mobile Developer"
+        
+        Work Preferences: "Remote", "Hybrid", "Onsite"
+        
+        Education Levels: "PhD", "Master's", "Bachelor's", "Bootcamp"
+        
+        Visa Status: "Citizen", "Work Visa", "Needs Sponsorship", "Permanent Resident"
+        
+        Common Skills: "JavaScript", "Python", "Java", "React", "Node.js", "AWS", "Docker", "TypeScript", "Go", "Rust", "C#", "Angular", "Vue", "Spring", "FastAPI", "Express", "Next.js", "GraphQL", "PostgreSQL", "MongoDB", "Redis", "Kubernetes", "Azure", "GCP"
+        
+        Common Languages: "English", "Spanish", "French", "Hindi", "Arabic", "Portuguese", "German", "Japanese", "Mandarin"
+        
+        Common Tags: "backend", "frontend", "fullstack", "devops", "qa", "data", "machine‑learning", "cloud", "mobile"
+        
         FilterPlan must include specific criteria in the "include" and/or "exclude" objects as appropriate:
         - For "include", specify what should be matched (e.g., must have these skills, must be in these locations).
         - For "exclude", specify what should be excluded (e.g., exclude certain titles, locations, skills, etc.).
         - Both "include" and "exclude" support the following fields:
-          - title: array of job titles (e.g., ["Software Engineer", "Developer"])
-          - location: array of locations (e.g., ["San Francisco", "New York"])
-          - skills: array of skills (e.g., ["JavaScript", "React", "Python"])
-          - languages: array of languages (e.g., ["English", "Spanish"])
-          - education_level: array of education levels (e.g., ["Bachelor's", "Master's"])
-          - work_preference: array of work preferences (e.g., ["Remote", "Hybrid", "On-site"])
-          - visa_status: array of visa statuses (e.g., ["US Citizen", "H1B", "Green Card"])
-          - tags: array of tags (e.g., ["Senior", "Full-stack", "Frontend"])
+          - title: array of job titles (use exact values from above)
+          - location: array of locations (e.g., ["San Francisco, USA", "New York, USA"])
+          - skills: array of skills (use exact values from above)
+          - languages: array of languages (use exact values from above)
+          - education_level: array of education levels (use exact values from above)
+          - work_preference: array of work preferences (use exact values from above)
+          - visa_status: array of visa statuses (use exact values from above)
+          - tags: array of tags (use exact values from above)
           - years_experience_min / years_experience_max: minimum/maximum years of experience (number)
           - desired_salary_min / desired_salary_max: minimum/maximum desired salary (number)
           - availability_weeks_max: maximum availability in weeks (number)

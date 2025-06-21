@@ -4,9 +4,9 @@ import { useRef, useEffect, useState } from 'react';
 import { DndContext, useDraggable } from '@dnd-kit/core';
 import ChatMessage from './ChatMessage';
 import ChatInput from './ChatInput';
-import type { Candidate } from '@/app/lib/candidates';
+import type { Candidate } from '@/app/lib/api/candidates';
 import type { TimelineEntry } from '@/app/lib/types';
-import { processChatStream } from '@/app/lib/chat/stream';
+import { processChatStream } from '@/app/lib/api/chat/stream';
 import { Minimize2, Maximize2, Move } from 'lucide-react';
 
 type Message = {
@@ -70,6 +70,7 @@ export default function ChatPanel({ setFilteredCandidates, onTimelineUpdate }: C
   const [dragTransform, setDragTransform] = useState<{ x: number; y: number } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [isMinimized, setIsMinimized] = useState(false);
+  const chatInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -134,6 +135,7 @@ export default function ChatPanel({ setFilteredCandidates, onTimelineUpdate }: C
             role: 'system',
             content: `✅ Completed in ${duration.toFixed(2)} seconds`,
           }]);
+          chatInputRef.current?.focus();
           
           // Add completion entry to timeline
           onTimelineUpdate(prev => [...prev, {
@@ -186,6 +188,7 @@ export default function ChatPanel({ setFilteredCandidates, onTimelineUpdate }: C
         <div className="w-[600px] flex flex-col-reverse">
           <div className="shrink-0 pt-4">
             <ChatInput
+              ref={chatInputRef}
               input={input}
               isLoading={isLoading}
               onInputChange={setInput}

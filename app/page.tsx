@@ -8,7 +8,7 @@ import TimelineSidebar from './components/chat/TimelineSidebar';
 import IntroAnimation from './components/IntroAnimation';
 import OnboardingTour from './components/OnboardingTour';
 import { HelpCircle } from 'lucide-react';
-import type { Candidate } from './lib/candidates';
+import type { Candidate } from './lib/api';
 import type { TimelineEntry } from './lib/types';
 
 export default function Home() {

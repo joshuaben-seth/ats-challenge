@@ -113,8 +113,8 @@ export default function TimelineSidebar({ timeline, isVisible, onToggle }: Timel
                       <div className="absolute left-11 top-6 h-full w-0.5 bg-border -z-10" />
                     )}
 
-                    <div className={`absolute left-0 top-1 w-6 h-6 rounded-full ${color} flex items-center justify-center ring-6 ring-background ${isQuery ? '' : 'left-8 w-5 h-5'}`}>
-                      <Icon className={`text-white ${isQuery ? 'w-3 h-3' : 'w-3 h-3'}`} />
+                    <div className={`absolute left-0 top-1 w-5 h-5 rounded-full ${color} flex items-center justify-center ring-4 ring-background ${isQuery ? '' : 'left-8 w-4 h-4'}`}>
+                      <Icon className={`text-white ${isQuery ? 'w-2.5 h-2.5' : 'w-2 h-2'}`} />
                     </div>
                     
                     <div className="flex flex-col">

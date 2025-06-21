@@ -21,32 +21,32 @@ interface TourStep {
 const tourSteps: TourStep[] = [
   {
     id: 'chat-input',
-    title: 'Your Recruitment Wand',
-    description: 'This is where the magic happens! Tell me who you\'re looking for in plain English. For example, "Find me a software wizard in Wonderland" or "Show me all the unicorn designers available".',
+    title: 'Type or Speak Here',
+    description: 'Enter your search by typing or using voice. For example: "Find software engineers in New York."',
     target: '[data-tour="chat-input"]',
     position: 'top',
     offset: { x: 0, y: -20 }
   },
   {
     id: 'chat-controls',
-    title: 'Tidy Up Your Workspace',
-    description: 'Feel free to move this chat window around with the drag handle, or tuck it away with the minimize button. Your workspace should be as comfy as your favorite chair!',
+    title: 'Move or Minimize Chat',
+    description: 'Use the drag handle to move the chat window, or click the minimize button to hide it.',
     target: '[data-tour="chat-controls"]',
     position: 'left',
     offset: { x: -20, y: 0 }
   },
   {
     id: 'timeline-controls',
-    title: 'See My Secret Notes!',
-    description: 'Ever wonder how I find the perfect candidates? Click here to peek behind the curtain! This panel shows you my step-by-step process for every search you make.',
+    title: 'View Search Steps',
+    description: 'Click here to see the step-by-step process for your recent searches.',
     target: '[data-tour*="timeline-"]',
     position: 'right',
     offset: { x: 20, y: 0 }
   },
   {
     id: 'field-selector',
-    title: 'Design Your Dashboard',
-    description: 'You\'re in the director\'s chair! Click here to pick and choose exactly what you want to see. Want to see skills but not salary? No problem. Customize the view to your heart\'s content.',
+    title: 'Customize Your View',
+    description: 'Click here to select which fields and information are shown in your dashboard.',
     target: '[data-tour="field-selector"]',
     position: 'bottom',
     offset: { x: 0, y: 20 }

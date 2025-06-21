@@ -2,7 +2,7 @@
 
 import { Send, Mic } from 'lucide-react';
 import ChatIconButton from './ChatIconButton';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
 
 interface ChatInputProps {
   input: string;
@@ -11,11 +11,14 @@ interface ChatInputProps {
   onSubmit: (e: React.FormEvent) => void;
 }
 
-export default function ChatInput({ input, isLoading, onInputChange, onSubmit }: ChatInputProps) {
+const ChatInput = forwardRef<HTMLInputElement, ChatInputProps>(({ input, isLoading, onInputChange, onSubmit }, ref) => {
   const [isListening, setIsListening] = useState(false);
   const [transcriptionStatus, setTranscriptionStatus] = useState<'idle' | 'transcribing' | 'error'>('idle');
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const localInputRef = useRef<HTMLInputElement>(null);
+  const longPressRef = useRef(false);
+
+  useImperativeHandle(ref, () => localInputRef.current!);
 
   const handleAudio = async (audioBlob: Blob) => {
     setTranscriptionStatus('transcribing');
@@ -35,7 +38,7 @@ export default function ChatInput({ input, isLoading, onInputChange, onSubmit }:
       const data = await response.json();
       onInputChange(data.text);
       setTranscriptionStatus('idle');
-      inputRef.current?.focus();
+      localInputRef.current?.focus();
     } catch (error) {
       console.error(error);
       setTranscriptionStatus('error');
@@ -59,6 +62,7 @@ export default function ChatInput({ input, isLoading, onInputChange, onSubmit }:
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       setIsListening(true);
       setTranscriptionStatus('idle');
+      onInputChange('');
       const recorder = new MediaRecorder(stream);
       mediaRecorderRef.current = recorder;
       const audioChunks: Blob[] = [];
@@ -70,7 +74,7 @@ export default function ChatInput({ input, isLoading, onInputChange, onSubmit }:
       recorder.onstop = () => {
         const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
         handleAudio(audioBlob);
-        stream.getTracks().forEach(track => track.stop()); // Stop the microphone access
+        stream.getTracks().forEach(track => track.stop());
       };
 
       recorder.start();
@@ -80,20 +84,36 @@ export default function ChatInput({ input, isLoading, onInputChange, onSubmit }:
       setTranscriptionStatus('error');
     }
   };
-  
-  // Keyboard shortcut for push-to-talk
+
   useEffect(() => {
+    let pressTimer: NodeJS.Timeout | null = null;
+
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'm' && !isListening && !isLoading) {
-        event.preventDefault();
-        startListening();
+      if (event.key.toLowerCase() === 'm' && !isListening && !isLoading) {
+        if (pressTimer === null) {
+          longPressRef.current = false;
+          pressTimer = setTimeout(() => {
+            event.preventDefault();
+            startListening();
+            longPressRef.current = true;
+          }, 200);
+        }
       }
     };
 
     const handleKeyUp = (event: KeyboardEvent) => {
-      if (event.key === 'm' && isListening) {
-        event.preventDefault();
-        stopListening();
+      if (event.key.toLowerCase() === 'm') {
+        if (pressTimer) {
+          clearTimeout(pressTimer);
+          pressTimer = null;
+        }
+
+        if (isListening) {
+          event.preventDefault();
+          stopListening();
+        } else if (!longPressRef.current) {
+          // Don't prevent default - let the character be typed normally
+        }
       }
     };
 
@@ -102,10 +122,12 @@ export default function ChatInput({ input, isLoading, onInputChange, onSubmit }:
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('keyup', handleKeyUp);
+      window.removeEventListener('keyup',handleKeyUp);
+      if (pressTimer) {
+        clearTimeout(pressTimer);
+      }
     };
-  }, [isListening, isLoading]);
-
+  }, [isListening, isLoading, input, onInputChange]);
 
   return (
     <form
@@ -114,11 +136,9 @@ export default function ChatInput({ input, isLoading, onInputChange, onSubmit }:
       autoComplete="off"
       data-tour="chat-input"
     >
-      <div
-        className="w-full flex items-center bg-gradient-to-r from-secondary/80 to-secondary/60 backdrop-blur-sm rounded-full shadow-lg pl-6 pr-2 py-2 border border-border/50 transition-all duration-200 hover:shadow-xl chat-input"
-      >
+      <div className="w-full flex items-center bg-gradient-to-r from-secondary/80 to-secondary/60 backdrop-blur-sm rounded-full shadow-lg pl-6 pr-2 py-2 border border-border/50 transition-all duration-200 hover:shadow-xl chat-input">
         <input
-          ref={inputRef}
+          ref={localInputRef}
           type="text"
           className="flex-1 w-full bg-transparent border-none outline-none text-foreground placeholder-muted-foreground text-base focus:ring-0"
           placeholder={isListening ? 'Listening...' : 'Ask ATS-Lite anything... or hold [M] to speak'}
@@ -149,4 +169,7 @@ export default function ChatInput({ input, isLoading, onInputChange, onSubmit }:
       {transcriptionStatus === 'error' && <p className="text-xs text-red-500 text-center mt-2">Sorry, I had trouble catching that. Please try again.</p>}
     </form>
   );
-} 
+});
+
+ChatInput.displayName = 'ChatInput';
+export default ChatInput; 

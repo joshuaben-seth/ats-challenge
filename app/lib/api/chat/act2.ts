@@ -1,5 +1,5 @@
 import { StreamWriter, RankingPlan, Candidate } from '@/app/lib/types';
-import { rankCandidates } from '@/app/lib/candidates';
+import { rankCandidates } from '@/app/lib/api';
 import { sendPhaseUpdate } from './utils';
 
 export async function act2Phase(writer: StreamWriter, candidates: Candidate[], rankingPlan: RankingPlan): Promise<Candidate[]> {

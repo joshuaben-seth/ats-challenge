@@ -1,5 +1,5 @@
 import { StreamWriter, FilterPlan, Candidate } from '@/app/lib/types';
-import { loadCandidates, filterCandidates } from '@/app/lib/candidates';
+import { loadCandidates, filterCandidates } from '@/app/lib/api';
 import { sendPhaseUpdate } from './utils';
 
 export async function act1Phase(writer: StreamWriter, filterPlan: FilterPlan): Promise<Candidate[]> {

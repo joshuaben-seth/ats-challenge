@@ -1,4 +1,4 @@
-import { runMCPWorkflow, createStreamWriter } from '@/app/lib/chat';
+import { runMCPWorkflow, createStreamWriter } from '@/app/lib/api';
 
 export async function POST(req: Request) {
   const { messages } = await req.json();

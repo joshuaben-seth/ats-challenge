@@ -1,7 +1,7 @@
 'use client';
 
 import ChatPanel from './ChatPanel';
-import type { Candidate } from '@/app/lib/candidates';
+import type { Candidate } from '@/app/lib/api';
 import type { TimelineEntry } from '@/app/lib/types';
 
 type ChatBoxProps = {
