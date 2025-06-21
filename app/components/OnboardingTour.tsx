@@ -70,6 +70,9 @@ export default function OnboardingTour({ isVisible, onComplete, onSkip }: Onboar
     if (isVisible) {
       setOverlayVisible(true);
       setCurrentStep(0);
+      setTimeout(() => {
+        checkAllElementsExist();
+      }, 1000);
     }
   }, [isVisible]);
 
@@ -82,6 +85,32 @@ export default function OnboardingTour({ isVisible, onComplete, onSkip }: Onboar
   useEffect(() => {
     if (isVisible && overlayVisible) {
       updatePositions();
+    }
+  }, [currentStep, isVisible, overlayVisible]);
+
+  // Special handling for field selector step
+  useEffect(() => {
+    if (isVisible && overlayVisible && currentStep === 3) {
+      // For the field selector step, wait a bit longer and retry more aggressively
+      const checkFieldSelector = () => {
+        // First check if the CandidatesTable is rendered
+        const candidatesTable = document.querySelector('[data-tour="field-selector"]')?.closest('.flex.flex-col.h-full');
+        if (!candidatesTable) {
+          console.log('CandidatesTable not found, retrying...');
+          setTimeout(checkFieldSelector, 200);
+          return;
+        }
+        
+        const fieldSelector = document.querySelector('[data-tour="field-selector"]');
+        if (!fieldSelector) {
+          console.log('Field selector not found, retrying...');
+          setTimeout(checkFieldSelector, 200);
+        } else {
+          console.log('Field selector found!', fieldSelector);
+          updatePositions();
+        }
+      };
+      checkFieldSelector();
     }
   }, [currentStep, isVisible, overlayVisible]);
 
@@ -98,13 +127,57 @@ export default function OnboardingTour({ isVisible, onComplete, onSkip }: Onboar
 
   const updatePositions = () => {
     const currentTourStep = tourSteps[currentStep];
-    const targetElement = document.querySelector(currentTourStep.target) as HTMLElement;
+    console.log(`Updating positions for step ${currentStep}: ${currentTourStep.id}`);
+    console.log(`Looking for selector: ${currentTourStep.target}`);
+    
+    let targetElement = document.querySelector(currentTourStep.target) as HTMLElement;
+    
+    // Fallback for field selector step
+    if (!targetElement && currentStep === 3) {
+      console.log('Trying fallback selectors for field selector...');
+      // Try alternative selectors
+      targetElement = document.querySelector('button[data-tour="field-selector"]') as HTMLElement;
+      if (!targetElement) {
+        // Look for button with Settings icon
+        const buttons = document.querySelectorAll('button');
+        for (const button of buttons) {
+          const settingsIcon = button.querySelector('svg[data-lucide="settings"]');
+          if (settingsIcon) {
+            targetElement = button as HTMLElement;
+            console.log('Found field selector using Settings icon');
+            break;
+          }
+        }
+      }
+      if (!targetElement) {
+        // Look for button containing "Fields" text
+        const buttons = document.querySelectorAll('button');
+        for (const button of buttons) {
+          if (button.textContent?.includes('Fields')) {
+            targetElement = button as HTMLElement;
+            console.log('Found field selector using text content');
+            break;
+          }
+        }
+      }
+      if (targetElement) {
+        console.log('Found field selector using fallback selector');
+      }
+    }
+    
     const tooltipElement = stepRef.current;
     
+    console.log('Target element found:', !!targetElement);
+    console.log('Tooltip element found:', !!tooltipElement);
+    
     if (targetElement && tooltipElement) {
+      console.log('Both elements found, calculating positions...');
       const targetRect = targetElement.getBoundingClientRect();
       const tooltipRect = tooltipElement.getBoundingClientRect();
       const offset = currentTourStep.offset || { x: 0, y: 0 };
+      
+      console.log('Target rect:', targetRect);
+      console.log('Tooltip rect:', tooltipRect);
       
       // Set highlight position
       setHighlightPosition({
@@ -153,11 +226,25 @@ export default function OnboardingTour({ isVisible, onComplete, onSkip }: Onboar
       }
 
       setTooltipPosition({ x: tooltipX, y: tooltipY });
+      console.log('Positions set successfully');
     } else {
-      // If target element or tooltip is not found, try again after a short delay
+      // Debug logging to help identify the issue
+      console.log(`Tour step ${currentStep}: Target selector "${currentTourStep.target}" not found`);
+      console.log('Available data-tour elements:', document.querySelectorAll('[data-tour]'));
+      
+      // Log all elements with data-tour attributes
+      const allTourElements = document.querySelectorAll('[data-tour]');
+      allTourElements.forEach((el, index) => {
+        console.log(`Element ${index}:`, el.getAttribute('data-tour'), el);
+      });
+      
+      // If target element or tooltip is not found, try again after a longer delay
+      // Use exponential backoff for retries
+      const retryDelay = Math.min(100 * Math.pow(2, currentStep), 1000);
+      console.log(`Retrying in ${retryDelay}ms...`);
       setTimeout(() => {
         updatePositions();
-      }, 100);
+      }, retryDelay);
     }
   };
 
@@ -176,6 +263,26 @@ export default function OnboardingTour({ isVisible, onComplete, onSkip }: Onboar
   };
 
   const currentTourStep = tourSteps[currentStep];
+
+  const checkAllElementsExist = () => {
+    console.log('Checking all tour elements...');
+    const missingElements = tourSteps.filter(step => {
+      const element = document.querySelector(step.target);
+      const found = !!element;
+      console.log(`Step ${step.id}: ${found ? '✓' : '✗'} - ${step.target}`);
+      return !found;
+    });
+    
+    if (missingElements.length > 0) {
+      console.warn('Tour elements not found:', missingElements.map(step => step.target));
+      console.log('Retrying in 1 second...');
+      setTimeout(() => {
+        checkAllElementsExist();
+      }, 1000);
+    } else {
+      console.log('All tour elements found!');
+    }
+  };
 
   if (!isVisible || !overlayVisible) return null;
 

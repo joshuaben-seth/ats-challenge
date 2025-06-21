@@ -77,6 +77,13 @@ export default function ChatPanel({ setFilteredCandidates, onTimelineUpdate }: C
   }, [messages]);
 
   useEffect(() => {
+    // Focus the chat input when the component mounts
+    if (chatInputRef.current) {
+      chatInputRef.current.focus();
+    }
+  }, []);
+
+  useEffect(() => {
     if (position === null && typeof window !== 'undefined') {
       const panelWidth = 600;
       const margin = 20;
@@ -185,29 +192,33 @@ export default function ChatPanel({ setFilteredCandidates, onTimelineUpdate }: C
       }}
     >
       <FloatingDraggablePanel position={position} transform={dragTransform || undefined}>
-        <div className="w-[600px] flex flex-col-reverse">
-          <div className="shrink-0 pt-4">
-            <ChatInput
-              ref={chatInputRef}
-              input={input}
-              isLoading={isLoading}
-              onInputChange={setInput}
-              onSubmit={handleSubmit}
-            />
-          </div>
-          
-          <div className="relative min-h-14">
+        <div className="w-[600px] flex flex-col">
+          {/* Glassmorphism background container */}
+          <div className={`transition-all duration-500 ease-in-out ${
+            isMinimized 
+              ? 'bg-transparent backdrop-blur-none border-transparent shadow-none' 
+              : 'bg-white/5 backdrop-blur-xl border border-white/20 shadow-2xl shadow-black/20'
+          } rounded-2xl`}>
+            <div className="relative min-h-14 flex-1">
             <div className="absolute top-3 right-3 z-20 flex items-center gap-2" data-tour="chat-controls">
-              <div className="bg-background/50 backdrop-blur-sm p-1 rounded-lg">
+                <div className={`transition-all duration-300 ${
+                  isMinimized 
+                    ? 'bg-black/20 backdrop-blur-sm border border-white/10' 
+                    : 'bg-white/10 backdrop-blur-sm border border-white/30'
+                } p-1 rounded-lg`}>
                 <button 
                   onClick={() => setIsMinimized(!isMinimized)} 
-                  className="text-gray-400 hover:text-white transition-colors w-5 h-5 flex items-center justify-center"
+                    className="text-gray-200 hover:text-white transition-colors w-5 h-5 flex items-center justify-center"
                   title={isMinimized ? 'Show messages' : 'Hide messages'}
                 >
                   {isMinimized ? <Maximize2 size={16} /> : <Minimize2 size={16} />}
                 </button>
               </div>
-              <div className="bg-background/50 backdrop-blur-sm p-1 rounded-lg">
+                <div className={`transition-all duration-300 ${
+                  isMinimized 
+                    ? 'bg-black/20 backdrop-blur-sm border border-white/10' 
+                    : 'bg-white/10 backdrop-blur-sm border border-white/30'
+                } p-1 rounded-lg`}>
                 <div className="w-5 h-5 flex items-center justify-center">
                   <DragHandle />
                 </div>
@@ -227,11 +238,11 @@ export default function ChatPanel({ setFilteredCandidates, onTimelineUpdate }: C
                 ))}
                 {isLoading && (
                   <div className="flex justify-start py-2">
-                    <div className="text-xs text-muted-foreground px-3 py-2 rounded-full bg-secondary/30 flex items-center gap-2">
+                      <div className="text-xs text-gray-200 px-3 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 flex items-center gap-2">
                       <div className="flex items-center gap-1">
-                        <div className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce"></div>
-                        <div className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                        <div className="w-1.5 h-1.5 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                          <div className="w-1.5 h-1.5 bg-white rounded-full animate-bounce"></div>
+                          <div className="w-1.5 h-1.5 bg-white rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                          <div className="w-1.5 h-1.5 bg-white rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                       </div>
                       <span>Working...</span>
                     </div>
@@ -239,6 +250,17 @@ export default function ChatPanel({ setFilteredCandidates, onTimelineUpdate }: C
                 )}
                 <div ref={messagesEndRef} />
               </div>
+              </div>
+            </div>
+            
+            <div className="shrink-0 pt-4">
+              <ChatInput
+                ref={chatInputRef}
+                input={input}
+                isLoading={isLoading}
+                onInputChange={setInput}
+                onSubmit={handleSubmit}
+              />
             </div>
           </div>
         </div>

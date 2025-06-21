@@ -1,105 +1,392 @@
-# ATS Challenge — “Watch the ATS Think”
+# Code Modularization Guide
 
-*A mini coding exercise that shows off front‑end polish, back‑end logic, and a transparent agent loop.*
+This document outlines the modular structure of the Amara Interview application and how to use the various utilities and components.
 
-## 1 · Scenario
+## Directory Structure
 
-You ship a tiny **Next.js** site that:
-
-1. **Pre‑loads a CSV** — `candidates.csv` (≈ 50 dummy rows)
-
-   ```csv
-   id,full_name,title,location,years_experience,skills,availability_weeks,willing_to_relocate,etc.
-   ```
-
-2. Displays a **chat box** for recruiters to type natural‑language queries such as:
-
-   > Backend engineers in Germany, most experience first.
-
-3. Runs an explicit **MCP loop** (Think → Act → Act → Speak) to
-
-   * **filter** the dataset
-   * **rank** the subset
-   * **stream every step** to the UI with smooth animations
-
-The assistant is nick‑named **ATS‑Lite**.
-
-## 2 · Required Tools (pure JavaScript)
-
-| Tool                        | Signature                                         | Purpose                            |
-| --------------------------- | ------------------------------------------------- | ---------------------------------- |
-| `filterCandidates(plan)`    | `{ include?, exclude? } → Candidate[]`            | Boolean / regex / ≥ filtering      |
-| `rankCandidates(ids, plan)` | `{ primary, tie_breakers? } → Candidate[]`        | Scores & sorts the filtered subset |
-| `aggregateStats(ids)`[^1]   | `ids[] → { count, avg_experience, top_skills[] }` | Quick stats for richer replies     |
-
-All tools are *synchronous* – no DB or external I/O.
-
-[^1]: Optional, but helpful for richer assistant summaries.
-
-## 3 · MCP Workflow
-
-1. **THINK** – The LLM receives the user message **plus** the CSV header row and replies *only* with JSON:
-
-   ```json
-   {
-     "filter": { /* FilterPlan */ },
-     "rank":   { /* RankingPlan */ }
-   }
-   ```
-
-2. **ACT 1** – Front‑end calls `filterCandidates(filterPlan)`
-
-3. **ACT 2** – Front‑end calls `rankCandidates(ids, rankingPlan)`
-
-4. **SPEAK** – Front‑end calls the LLM again, passing the **top 5 rows** to generate a recruiter‑friendly summary
-
-Each phase emits an event that surfaces live in the UI.
-
-## 4 · UI & Animation Requirements
-
-| Area                 | Must‑have                                                                                                                           | Library ideas                     |
-| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
-| **Chat panel**       | Stream assistant tokens as they arrive                                                                                              | Tailwind, `react-virtual`         |
-| **Timeline sidebar** | Collapsible panel that reveals, one line at a time: 1️⃣ filter plan JSON → 2️⃣ match count → 3️⃣ ranking plan JSON → 4️⃣ ranked IDs | `framer-motion` (stagger / slide) |
-| **Result table**     | Always shows the **current ranked subset**; when rows change or reorder, they **animate** into place                                | `framer-motion` layout / FLIP     |
-| Loading cues         | Progress bar or shimmer while the agent works                                                                                       | `nprogress` or custom             |
-| Row details          | Click a row → side panel with full candidate JSON                                                                                   | —                                 |
-
-## 5 · Example Flow
-
-```text
-You: Backend engineers in Germany, most experience first.
-
-Timeline ▶
-1️⃣ filter plan ready
-2️⃣ 7 rows matched
-3️⃣ ranking plan ready
-4️⃣ ranked IDs [14, 5, 22, …]   ← lines fade‑in one by one
-
-Result table slides into new order.
-
-ATS‑Lite: I found 7 matches (avg 6.1 yrs). Here are the top three…
+```
+app/
+├── lib/
+│   ├── api/           # API-related functions and data fetching
+│   ├── store/         # Zustand state management
+│   ├── types.ts       # TypeScript type definitions
+│   ├── ui/            # UI utilities and components
+│   ├── utils/         # General utility functions
+│   └── hooks/         # Custom React hooks
+├── components/        # React components organized by feature
+└── page.tsx          # Main application page
 ```
 
-## 6 · Deliverables
+## UI Utilities (`app/lib/ui/`)
 
-* **Git repo** with clean commits & a clear `README.md` (`pnpm install && pnpm dev`)
-* **`.env.example`** for the OpenAI key
-* **One Jest test**
-  *Input:* *React dev, Cyprus, sort by experience desc*
-  *Expectation:* candidate **#12** appears above **#5**
-* **Links** — provide both (a) the GitHub repository URL and (b) a live deployment link (e.g., Vercel, Netlify)
+### Animations (`animations.ts`)
+Centralized animation variants for consistent motion across the application.
 
-## 7 · Evaluation Criteria
+```typescript
+import { fadeInVariants, slideUpVariants, staggerContainerVariants } from '@/app/lib/ui/animations';
 
-* **Agent transparency** – each MCP phase surfaced in order
-* **Prompt robustness** – LLM reliably emits valid JSON; graceful retry on errors
-* **Animation & UX** – timeline staggers, rows re‑flow without jank; keyboard shortcut (⌘ + Enter) to send
-* **Code quality** – modular data helpers, tidy state (Context/Zustand), minimal globals
-* **Docs & tests** – quick start, clear tool contracts, meaningful test coverage
+// Usage in components
+<motion.div variants={fadeInVariants} initial="hidden" animate="visible">
+  Content
+</motion.div>
+```
 
----
+### Styles (`styles.ts`)
+Predefined CSS class combinations for consistent styling.
 
-### Keep It Small 📎
+```typescript
+import { 
+  glassmorphismClasses, 
+  cardClasses,
+  buttonClasses, 
+  inputClasses,
+  loadingClasses,
+  statusClasses,
+  layoutClasses,
+  textClasses,
+  spacingClasses,
+  borderClasses
+} from '@/app/lib/ui/styles';
 
-No auth, no uploads, no database — just a CSV in memory, two synchronous tools, two LLM calls, and a polished UI that lets reviewers **watch the ATS think** in real time.
+// Usage
+<div className={glassmorphismClasses.light}>
+  <button className={buttonClasses.primary}>Click me</button>
+</div>
+```
+
+### Components (`components.tsx`)
+Reusable UI components with consistent styling and behavior.
+
+```typescript
+import { 
+  LoadingSpinner,
+  LoadingDots,
+  StatusBadge,
+  Card,
+  Button, 
+  Modal,
+  Tooltip,
+  Divider,
+  EmptyState
+} from '@/app/lib/ui/components';
+
+// Usage
+<Card variant="elevated">
+  <Button variant="primary" onClick={handleClick}>
+    Action
+  </Button>
+  <LoadingSpinner size="md" />
+</Card>
+```
+
+## Data Utilities (`app/lib/utils/`)
+
+### Data Utilities (`data.ts`)
+Functions for data manipulation, normalization, and processing.
+
+```typescript
+import { 
+  // Normalization
+  normalizeText, 
+  normalizeArray,
+  
+  // Matching
+  hasMatch, 
+  hasMatchSingle,
+
+  // Array utilities
+  chunkArray,
+  uniqueArray,
+  sortByProperty, 
+  
+  // Object utilities
+  deepClone,
+  pick,
+  omit,
+
+  // Candidate helpers
+  getCandidateSkills,
+  getCandidateLanguages,
+  // ... and more
+  
+} from '@/app/lib/utils/data';
+
+// Text normalization
+const normalized = normalizeText("  Hello, World!  "); // "hello world"
+
+// Array matching
+const hasMatchResult = hasMatch(['react', 'typescript'], ['JavaScript', 'React']); // true
+
+// Object sorting
+const sorted = sortByProperty(users, 'name', 'asc');
+
+// Deep cloning
+const cloned = deepClone(complexObject);
+```
+
+### Format Utilities (`format.ts`)
+Functions for formatting dates, numbers, text, and other data types.
+
+```typescript
+import { 
+  // Date & Time
+  formatDate, 
+  formatDateTime,
+  formatRelativeTime,
+  formatTime,
+  formatTimeWithSeconds,
+
+  // Numbers
+  formatNumber,
+  formatCurrency, 
+  formatPercentage,
+  formatFileSize,
+
+  // Text
+  capitalizeFirst,
+  capitalizeWords,
+  truncateText,
+  slugify,
+  formatPhoneNumber,
+
+  // Arrays
+  formatList,
+  formatArrayAsPills,
+
+  // Durations
+  formatDuration,
+  formatDurationShort
+} from '@/app/lib/utils/format';
+
+// Date formatting
+const formatted = formatDate(new Date(), { year: 'numeric', month: 'long' });
+
+// Currency formatting
+const price = formatCurrency(1234.56); // "$1,234.56"
+
+// Duration formatting
+const duration = formatDuration(3661); // "1h 1m 1s"
+
+// Text truncation
+const truncated = truncateText("Very long text", 20); // "Very long text..."
+```
+
+### Validation Utilities (`validation.ts`)
+Functions for validating user inputs and data.
+
+```typescript
+import { 
+  // String validation
+  isNotEmpty,
+  isMinLength,
+  isAlphanumeric,
+  // ... and more
+
+  // Type-specific validation
+  isValidEmail, 
+  isValidUrl,
+  isValidPhoneNumber,
+  isValidDate,
+  isStrongPassword, 
+  getPasswordStrength,
+  isValidCreditCard,
+
+  // Number validation
+  isPositiveNumber,
+  isInRange,
+  // ... and more
+
+  // Array validation
+  isNotEmptyArray,
+  isArrayMinLength,
+  // ... and more
+
+  // Object validation
+  isNotEmptyObject,
+  hasRequiredKeys,
+  // ... and more
+
+  // File validation
+  isValidFileSize,
+  isValidFileType,
+
+  // Composite validation
+  validateRequired,
+  validateField 
+} from '@/app/lib/utils/validation';
+
+// Email validation
+const isValid = isValidEmail('user@example.com'); // true
+
+// Password strength
+const strength = getPasswordStrength('MyP@ssw0rd'); // 'strong'
+
+// Field validation
+const result = validateField('test', {
+  required: true,
+  minLength: 3,
+  maxLength: 10
+});
+```
+
+### DOM Utilities (`dom.ts`)
+Browser and DOM manipulation utilities.
+
+```typescript
+import { 
+  // Element selection
+  getElementById,
+  getElementBySelector,
+  // ... and more
+
+  // Focus management
+  focusElement, 
+  focusFirstInput,
+
+  // Scrolling
+  scrollToElement,
+  scrollToTop,
+  isElementInViewport,
+
+  // Events
+  addEventListener,
+  addGlobalEventListener,
+  addClickOutsideListener,
+  addKeyboardListener,
+
+  // Clipboard
+  copyToClipboard, 
+  readFromClipboard,
+
+  // Downloads
+  downloadFile,
+  
+  // File reading
+  readFileAsText,
+  readFileAsDataURL,
+
+  // Viewport
+  getViewportSize,
+  isMobile,
+  isTablet,
+
+  // Storage
+  setLocalStorage,
+  getLocalStorage,
+  // ... and more
+} from '@/app/lib/utils/dom';
+
+// Clipboard operations
+await copyToClipboard('Text to copy');
+
+// Focus management
+focusElement(document.getElementById('input'));
+
+// Scroll utilities
+scrollToElement(element, 'smooth');
+
+// Viewport information
+const { width, height } = getViewportSize();
+```
+
+### Constants (`constants.ts`)
+Application-wide constants and configuration values.
+
+```typescript
+import { 
+  // App info
+  APP_NAME,
+  APP_VERSION,
+
+  // API
+  API_BASE_URL,
+  API_TIMEOUT, 
+  HTTP_STATUS,
+
+  // UI
+  ANIMATION_DURATION, 
+  Z_INDEX,
+  BREAKPOINTS,
+
+  // Configs
+  CHAT_CONFIG,
+  TIMELINE_CONFIG,
+  CANDIDATE_CONFIG,
+
+  // Rules & Messages
+  VALIDATION_RULES,
+  ERROR_MESSAGES,
+  SUCCESS_MESSAGES,
+
+  // Storage
+  STORAGE_KEYS,
+  SESSION_KEYS,
+
+  // Feature flags & Environment
+  FEATURES,
+  IS_DEVELOPMENT,
+
+  // Performance & Security
+  PERFORMANCE,
+  SECURITY
+} from '@/app/lib/utils/constants';
+
+// API configuration
+const timeout = API_TIMEOUT; // 30000ms
+
+// Animation timing
+const duration = ANIMATION_DURATION.NORMAL; // 300ms
+
+// Error messages
+const message = ERROR_MESSAGES.REQUIRED_FIELD; // "This field is required"
+
+// Responsive breakpoints
+const isMobile = window.innerWidth < BREAKPOINTS.MD;
+```
+
+## Custom Hooks (`app/lib/hooks/`)
+
+The `app/lib/hooks` directory is available for custom React hooks. As of the latest refactor, all initial hooks were removed as they were not in use. If you add new custom hooks, you should document their purpose and usage here.
+
+```
+
+## Frontend/USA/Experience Jest Test
+
+This project includes a Jest test that verifies the candidate search and ranking logic for the following scenario:
+
+**Test Input:**
+- Query: "frontend, usa, sort by experience desc"
+
+**Expectation:**
+- The system should find all Frontend Engineers located in the USA and sort them by years of experience in descending order.
+- According to the current data, there is only one Frontend Engineer in the USA: **Quinn Smith** (ID: 6, New York, USA, 18 years experience).
+- The test also includes a broader check for all engineers in the USA, verifying that candidates are sorted by experience and that Quinn Smith appears above less experienced candidates (e.g., Jess Garcia, ID: 5).
+
+**How to Run the Test:**
+
+```
+pnpm test:frontend-usa-experience
+```
+
+**Expected Output:**
+- The test should pass, confirming that:
+  - Quinn Smith is the only Frontend Engineer in the USA and is found by the filter.
+  - In a broader USA search, candidates are sorted by experience, with higher-experience candidates (e.g., Riley Davis, Quinn Smith) appearing above those with less experience (e.g., Jess Garcia).
+- The test logs the ranked results for verification.
+
+**Sample Output:**
+
+```
+Frontend Engineers in USA (by experience desc):
+1. Quinn Smith (ID: 6) - 18 years - New York, USA
+✅ Quinn Smith (ID: 6, 18 years) is the only Frontend Engineer in USA
+
+Engineers in USA (by experience desc):
+1. Riley Davis (ID: 20) - 20 years - QA Engineer - New York, USA
+2. Jamie Allen (ID: 26) - 20 years - Mobile Developer - San Francisco, USA
+3. Quinn Smith (ID: 6) - 18 years - Frontend Engineer - New York, USA
+...
+✅ Riley Davis (ID: 20, 20 years) appears at position 1
+✅ Quinn Smith (ID: 6, 18 years) appears at position 3
+✅ Jess Garcia (ID: 5, 8 years) appears at position 8
+```

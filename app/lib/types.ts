@@ -42,6 +42,7 @@ export interface FilterPlan {
     notice_period_weeks_max?: number;
     willing_to_relocate?: boolean;
     open_to_contract?: boolean;
+    full_name?: string[];
   };
   exclude?: {
     title?: string[];
@@ -52,6 +53,7 @@ export interface FilterPlan {
     work_preference?: string[];
     visa_status?: string[];
     tags?: string[];
+    full_name?: string[];
   };
 }
 

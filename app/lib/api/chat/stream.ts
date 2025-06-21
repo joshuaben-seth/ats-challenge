@@ -13,21 +13,21 @@ type StreamCallbacks = {
   onError: () => void;
 };
 
-const getPhaseTitle = (phase: string) => {
+const getPhaseTitle = (phase: string, data?: any) => {
   switch (phase) {
     case 'think': return 'Analysis';
-    case 'act1': return 'Filtering';
-    case 'act2': return 'Ranking';
+    case 'act1': return data?.count ? `${data.count} candidates found` : 'Filter plan ready';
+    case 'act2': return data?.rankedIds ? `${data.rankedIds.length} candidates ranked` : 'Ranking plan ready';
     case 'speak': return 'Summary';
     default: return 'Unknown Phase';
   }
 };
 
-const getPhaseDescription = (phase: string) => {
+const getPhaseDescription = (phase: string, data?: any) => {
   switch (phase) {
     case 'think': return 'Understanding your requirements';
-    case 'act1': return 'Finding matching candidates';
-    case 'act2': return 'Sorting by relevance';
+    case 'act1': return data?.count ? `Found ${data.count} candidates matching your criteria` : 'Preparing filter plan';
+    case 'act2': return 'Ranking candidates by relevance';
     case 'speak': return 'Generating insights';
     default: return 'Processing...';
   }
@@ -77,7 +77,12 @@ export async function processChatStream(
             if (existingEntry) {
               return prev.map(entry =>
                 entry.id === existingEntry.id && entry.type === 'phase'
-                  ? { ...entry, data: { ...entry.data, ...mcpResponse.data } }
+                  ? { 
+                      ...entry, 
+                      title: getPhaseTitle(mcpResponse.phase, { ...entry.data, ...mcpResponse.data }),
+                      description: getPhaseDescription(mcpResponse.phase, { ...entry.data, ...mcpResponse.data }),
+                      data: { ...entry.data, ...mcpResponse.data } 
+                    }
                   : entry
               );
             }
@@ -85,8 +90,8 @@ export async function processChatStream(
               type: 'phase',
               id: `${mcpResponse.phase}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
               phase: mcpResponse.phase,
-              title: getPhaseTitle(mcpResponse.phase),
-              description: getPhaseDescription(mcpResponse.phase),
+              title: getPhaseTitle(mcpResponse.phase, mcpResponse.data),
+              description: getPhaseDescription(mcpResponse.phase, mcpResponse.data),
               timestamp: new Date(),
               data: mcpResponse.data,
             };

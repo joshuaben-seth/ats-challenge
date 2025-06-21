@@ -2,6 +2,7 @@
 
 import type { Candidate } from '../types';
 import type { Variants } from 'framer-motion';
+import Badge from '../../components/candidates/Badge';
 
 export interface CandidatesTableProps {
   filteredCandidates?: Candidate[];
@@ -73,13 +74,9 @@ export const renderCellContent = (candidate: Candidate, columnKey: keyof Candida
   if (columnKey === 'skills' && Array.isArray(value)) {
     return (
       <div className="flex flex-wrap gap-1">
-        {(value as string[]).map((skill) => {
-          return (
-            <span key={skill} className="px-2 py-0.5 rounded font-medium text-xs bg-muted text-muted-foreground">
-              {skill}
-            </span>
-          );
-        })}
+        {(value as string[]).map((skill) => (
+          <Badge key={skill}>{skill}</Badge>
+        ))}
       </div>
     );
   }
@@ -88,9 +85,7 @@ export const renderCellContent = (candidate: Candidate, columnKey: keyof Candida
     return (
       <div className="flex flex-wrap gap-1">
         {(value as string[]).map((item) => (
-          <span key={item} className="px-2 py-0.5 rounded font-medium text-xs bg-muted text-muted-foreground">
-            {item}
-          </span>
+          <Badge key={item}>{item}</Badge>
         ))}
       </div>
     );
@@ -105,17 +100,16 @@ export const renderCellContent = (candidate: Candidate, columnKey: keyof Candida
   }
 
   if (columnKey === 'work_preference') {
-    const color = {
-      Remote: 'bg-blue-500/20 text-blue-400',
-      Hybrid: 'bg-purple-500/20 text-purple-400',
-      Onsite: 'bg-orange-500/20 text-orange-400',
-    }[value as string] || 'bg-secondary';
-    return <span className={`px-2 py-1 rounded-full font-medium text-xs ${color}`}>{value}</span>;
+    const variant = {
+      Remote: 'primary',
+      Hybrid: 'secondary',
+      Onsite: 'warning',
+    }[value as string] as 'primary' | 'secondary' | 'warning' | undefined;
+    return <Badge variant={variant} className="py-1">{value}</Badge>;
   }
 
   if (columnKey === 'open_to_contract') {
-    const color = value ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400';
-    return <span className={`px-2 py-1 rounded-full font-medium text-xs ${color}`}>{value ? 'Yes' : 'No'}</span>;
+    return <Badge variant={value ? 'success' : 'danger'} className="py-1">{value ? 'Yes' : 'No'}</Badge>;
   }
 
   return <div className="truncate" title={String(value)}>{String(value)}</div>;

@@ -17,11 +17,25 @@ const ChatInput = forwardRef<HTMLInputElement, ChatInputProps>(({ input, isLoadi
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const localInputRef = useRef<HTMLInputElement>(null);
   const longPressRef = useRef(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   useImperativeHandle(ref, () => localInputRef.current!);
 
+  useEffect(() => {
+    // If user starts typing while transcribing, cancel transcription
+    if (transcriptionStatus === 'transcribing' && input) {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      setTranscriptionStatus('idle');
+    }
+  }, [input, transcriptionStatus]);
+
   const handleAudio = async (audioBlob: Blob) => {
     setTranscriptionStatus('transcribing');
+    abortControllerRef.current = new AbortController();
+    const { signal } = abortControllerRef.current;
+
     const formData = new FormData();
     formData.append('audio', audioBlob, 'recording.webm');
 
@@ -29,6 +43,7 @@ const ChatInput = forwardRef<HTMLInputElement, ChatInputProps>(({ input, isLoadi
       const response = await fetch('/api/transcribe', {
         method: 'POST',
         body: formData,
+        signal,
       });
 
       if (!response.ok) {
@@ -40,14 +55,23 @@ const ChatInput = forwardRef<HTMLInputElement, ChatInputProps>(({ input, isLoadi
       setTranscriptionStatus('idle');
       localInputRef.current?.focus();
     } catch (error) {
-      console.error(error);
-      setTranscriptionStatus('error');
+      if ((error as Error).name === 'AbortError') {
+        console.log('Transcription cancelled by user.');
+      } else {
+        console.error(error);
+        setTranscriptionStatus('error');
+      }
+    } finally {
+      abortControllerRef.current = null;
     }
   };
 
   const stopListening = () => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
       mediaRecorderRef.current.stop();
+    }
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
     }
     setIsListening(false);
   };

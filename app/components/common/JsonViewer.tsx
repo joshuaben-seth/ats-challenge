@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 interface JsonViewerProps {
   title: string;
   jsonData: object;
+  defaultOpen?: boolean;
 }
 
 const formatJSON = (json: object) => {
@@ -17,16 +18,16 @@ const formatJSON = (json: object) => {
   }
 };
 
-export default function JsonViewer({ title, jsonData }: JsonViewerProps) {
-  const [isOpen, setIsOpen] = useState(false);
+export default function JsonViewer({ title, jsonData, defaultOpen = false }: JsonViewerProps) {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
-    <div className="text-xs mt-2">
+    <div className="text-xs mt-2 rounded-lg border border-border bg-secondary/30 p-3">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 text-muted-foreground hover:text-foreground w-full text-left"
+        className="flex items-center gap-2 text-muted-foreground hover:text-foreground w-full text-left font-semibold"
       >
-        <FileJson className="w-4 h-4 flex-shrink-0" />
+        <FileJson className="w-4 h-4 flex-shrink-0 text-primary" />
         <span className="font-medium flex-grow">{title}</span>
         <motion.div animate={{ rotate: isOpen ? 180 : 0 }}>
           <ChevronDown className="w-4 h-4" />
