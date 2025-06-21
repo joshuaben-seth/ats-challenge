@@ -385,8 +385,13 @@ Engineers in USA (by experience desc):
 1. Riley Davis (ID: 20) - 20 years - QA Engineer - New York, USA
 2. Jamie Allen (ID: 26) - 20 years - Mobile Developer - San Francisco, USA
 3. Quinn Smith (ID: 6) - 18 years - Frontend Engineer - New York, USA
-...
-✅ Riley Davis (ID: 20, 20 years) appears at position 1
-✅ Quinn Smith (ID: 6, 18 years) appears at position 3
-✅ Jess Garcia (ID: 5, 8 years) appears at position 8
+4. Hayden Walker (ID: 11) - 16 years - QA Engineer - New York, USA
+5. Jess Taylor (ID: 28) - 13 years - Product Engineer - New York, USA
+6. Morgan Scott (ID: 46) - 13 years - QA Engineer - San Francisco, USA
+7. Rowan Kim (ID: 14) - 9 years - QA Engineer - San Francisco, USA
+8. Jess Garcia (ID: 5) - 8 years - DevOps Engineer - San Francisco, USA
+9. Skylar Martinez (ID: 43) - 7 years - Data Scientist - New York, USA
+✅ Riley - Riley Davis (ID: 20, 20 years) appears at position 1
+✅ Quinn - Quinn Smith (ID: 6, 18 years) appears at position 3
+✅ Jess - Jess Garcia (ID: 5, 8 years) appears at position 8
 ```
